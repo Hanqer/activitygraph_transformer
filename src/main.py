@@ -178,10 +178,10 @@ def main(args):
 
         if args.output_dir:
             checkpoint_dir = Path(checkpoint_dir)
-            checkpoint_paths = [checkpoint_dir / 'checkpoint.pth']
+            checkpoint_paths = [checkpoint_dir + '/checkpoint.pth']
             # extra checkpoint before LR drop and every 100 epochs
             if (epoch + 1) % args.lr_drop == 0 or (epoch + 1) % args.save_checkpoint_every == 0:
-                checkpoint_paths.append(checkpoint_dir / f'checkpoint{epoch:05}.pth')
+                checkpoint_paths.append(checkpoint_dir + f'/checkpoint{epoch:05}.pth')
             for checkpoint_path in checkpoint_paths:
                 utils.save_on_master({'model': model_without_ddp.state_dict(), 'optimizer': optimizer.state_dict(), 'lr_scheduler': lr_scheduler.state_dict(), 'epoch': epoch, 'args': args,}, checkpoint_path) 
         
@@ -191,7 +191,7 @@ def main(args):
         log_stats = {**{f'train_{k}': v for k, v in train_stats.items()}, **{f'test_{k}': v for k, v in test_stats.items()},'epoch': epoch, 'n_parameters': n_parameters}
         
         if args.output_dir and utils.is_main_process():
-            with (checkpoint_dir / 'log.json').open("a") as f:
+            with (checkpoint_dir + '/log.json').open("a") as f:
                 f.write(json.dumps(log_stats) + "\n")
 
         lr_scheduler.step()
