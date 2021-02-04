@@ -19,7 +19,6 @@ import utils.misc as utils
 from models import build_model
 from engine import train_one_epoch, evaluate
 
-
 parser = argparse.ArgumentParser()
 parser.add_argument('--dataset', type=str,default="")
 parser.add_argument('--data_root',type=str,help='Path to data root directory')
@@ -79,9 +78,9 @@ parser.add_argument('--clip_max_norm', default=1, type=float,help='gradient clip
 
 # * Distributed Training
 parser.add_argument('--world_size', default=1, type=int, help='number of distributed processes')
-parser.add_argument('--dist_url', default='env://', help='url used to set up distributed training')
-parser.add_argument('--local_rank',type=int,help='local rank')
-parser.add_argument('--device', default='cpu',help='device to use for training / testing')
+parser.add_argument('--dist_url', default='tcp://127.0.0.1:23456', help='url used to set up distributed training')
+parser.add_argument('--local_rank',type=int, help='local rank')
+parser.add_argument('--device', default='cuda',help='device to use for training / testing')
 
 args = parser.parse_args()
 print(args)
@@ -114,9 +113,11 @@ def main(args):
         if args.mp:   
             model = torch.nn.parallel.DistributedDataParallel(model)
         else:
-            model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.gpu],find_unused_parameters=True)
+            model = torch.nn.parallel.DistributedDataParallel(model.to(args.gpu), device_ids=[args.gpu],find_unused_parameters=True)
 
         model_without_ddp = model.module
+    elif args.cuda:
+        model = model.to(device)
 
     n_parameters = sum(p.numel() for p in model.parameters() if p.requires_grad)
     print('number of params:', n_parameters)
@@ -178,20 +179,20 @@ def main(args):
 
         if args.output_dir:
             checkpoint_dir = Path(checkpoint_dir)
-            checkpoint_paths = [checkpoint_dir + '/checkpoint.pth']
+            checkpoint_paths = [checkpoint_dir / 'checkpoint.pth']
             # extra checkpoint before LR drop and every 100 epochs
             if (epoch + 1) % args.lr_drop == 0 or (epoch + 1) % args.save_checkpoint_every == 0:
-                checkpoint_paths.append(checkpoint_dir + '/checkpoint_epoch%d.pth' % (epoch+1))
+                checkpoint_paths.append(checkpoint_dir / f'checkpoint{epoch:05}.pth')
             for checkpoint_path in checkpoint_paths:
                 utils.save_on_master({'model': model_without_ddp.state_dict(), 'optimizer': optimizer.state_dict(), 'lr_scheduler': lr_scheduler.state_dict(), 'epoch': epoch, 'args': args,}, checkpoint_path) 
         
         # evaluation
         test_stats = evaluate(epoch, model, criterion, postprocessors, data_loader_test, args.output_dir, args.dataset, device)
 
-        log_stats = {**{'train_'str(k): v for k, v in train_stats.items()}, **{'test_'+str(k): v for k, v in test_stats.items()},'epoch': epoch, 'n_parameters': n_parameters}
+        log_stats = {**{'train_'+str(k): v for k, v in train_stats.items()}, **{'test_'+str(k): v for k, v in test_stats.items()},'epoch': epoch, 'n_parameters': n_parameters}
         
         if args.output_dir and utils.is_main_process():
-            with (checkpoint_dir + '/log.json').open("a") as f:
+            with (checkpoint_dir / 'log.json').open("a") as f:
                 f.write(json.dumps(log_stats) + "\n")
 
         lr_scheduler.step()

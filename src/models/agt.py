@@ -33,7 +33,7 @@ class AGT(nn.Module):
         self.class_embed = nn.Linear(hidden_dim, num_classes + 1)
         self.segments_embed = MLP(hidden_dim, hidden_dim, 2, 3)
 
-        self.input_proj = nn.Conv1d(2048, hidden_dim, kernel_size=1)
+        self.input_proj = nn.Conv1d(1024, hidden_dim, kernel_size=1)
         self.aux_loss = aux_loss
 
     def forward(self, samples, mask):
@@ -142,8 +142,8 @@ class SetCriterion(nn.Module):
 
         else:
             losses = {}
-            losses['loss_segment'] = 0
-            losses['loss_siou'] = 0
+            losses['loss_segment'] = torch.zeros(1).sum().to(src_segments_orig.device)
+            losses['loss_siou'] = torch.zeros(1).sum().to(src_segments_orig.device)
 
 
         return losses
@@ -273,7 +273,7 @@ class PostProcessMatched(nn.Module):
                 out_labels.append(labels[i][logit_idx])
                 out_segments.append(segments[i][segment_idx,:])
 
-            if 'eges' in outputs.keys():
+            if 'edges' in outputs.keys():
               if type(outputs['edges']) != type(None):
                 edges_orig = outputs['edges']
                 output_edges = []
@@ -284,7 +284,7 @@ class PostProcessMatched(nn.Module):
                 results = [{'score': torch.tensor(scr), 'label': torch.tensor(lbl), 'segment': torch.tensor(seg), 'edge': torch.tensor(e)} for scr, lbl, seg, e in zip(out_scores, out_labels, out_segments, output_edges)]
 
             else:
-                results = [{'score': torch.empty(targets[0]['segments'].size()), 'label': torch.empty(targets[0]['segments'].size()), 'segment': torch.empty(targets[0]['segments'].size()), 'edge': torch.empty(targets[0]['segments'].size())}]
+                results = [{'score': torch.tensor(scr), 'label': torch.tensor(lbl), 'segment': torch.tensor(seg), 'edge': torch.empty(targets[0]['segments'].size())} for scr, lbl, seg in zip(out_scores, out_labels, out_segments)]
 
         else:
             results = [{'score': torch.empty(targets[0]['segments'].size()), 'label': torch.empty(targets[0]['segments'].size()), 'segment': torch.empty(targets[0]['segments'].size()), 'edge': torch.empty(targets[0]['segments'].size())}]

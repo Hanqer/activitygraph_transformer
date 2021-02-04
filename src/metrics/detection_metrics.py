@@ -93,11 +93,13 @@ class ActionDetectionEvaluator(object):
         label_lst, score_lst = [], []
         for p in prediction:
           for videoid, v in p.items():
-            for t_s, t_e, lbl, scr in zip(v['segment'][:,0].tolist(),v['segment'][:,1].tolist(),v['label'].tolist(),v['score'].tolist()):
+            if len(v['segment']) == 0: continue
+            for t_s, t_e, lbl, scr in zip(v['segment'][:,0].tolist(),v['segment'][:,1].tolist(),v['label'].tolist(), v['score'].tolist()):
                 video_lst.append(videoid)
                 t_start_lst.append(t_s)
                 t_end_lst.append(t_e)
                 label_lst.append(self.activity_index[int(lbl)])
+                #label_lst.append([self.activity_index[int(l)] for l in lbl])
                 score_lst.append(scr)
         prediction_df = pd.DataFrame({'video-id': video_lst,
                                    't-start': t_start_lst,
