@@ -10,17 +10,17 @@ LR=1e-5
 POSEMB=learned
 LRJOINER=1e-5
 SAVEFREQ=300
-NQUERIES=500
+NQUERIES=300
 NENCLAYERS=4
 NDECLAYERS=4
 HDIM=256
 NHEADS=4
-NPOSEMB=512
+NPOSEMB=256
 DROPOUT=0
 LRDROP=1500
 WDECAY=1e-5
 CLIPNORM=0
-NF=512
+NF=256
 
 OUT="output/checkpoints_"${FOLDER_SUFFIX}"/checkpoints_numqueries"${NQUERIES}"_lr"$LR"_lrdrop"${LRDROP}"_dropout"${DROPOUT}"_clipmaxnorm"${CLIPNORM}"_weightdecay"${WDECAY}"_posemb"$POSEMB"_lrjoiner"${LRJOINER}"_nheads"${NHEADS}"_nenclayers"${NENCLAYERS}"_ndeclayers"${NDECLAYERS}"_hdim"${HDIM}"_sr"${SR}"_batchsize"${BATCHSIZE}"_nposembdict"${NPOSEMB}"_numinputs"${NF}
 
