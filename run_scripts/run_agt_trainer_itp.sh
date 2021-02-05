@@ -31,7 +31,7 @@ mkdir -p ${LOGDIR}
 exec &> >(tee -a "${LOG}")
 echo Logging output to "${LOG}"
 
-DATA=$PWD"/../../data/"
+DATA=$PWD"/../../data/thumos"
 
 python -m torch.distributed.launch --nproc_per_node 8 src/main.py --dataset ${DATASET} --data_root ${DATA} --model "agt" --features "thumos_i3d_rgb" --batch_size ${BATCHSIZE} --enc_layers ${NENCLAYERS} --dec_layers ${NDECLAYERS} --num_queries ${NQUERIES} --nheads ${NHEADS} --dropout ${DROPOUT} --weight_decay ${WDECAY} --clip_max_norm ${CLIPNORM} --num_inputs ${NF} --num_pos_embed_dict ${NPOSEMB} --hidden_dim ${HDIM} --num_workers 0 --num_classes ${NCLASSES} --step_size ${NSTEPS} --sample_rate ${SR}  --lr ${LR} --lr_drop ${LRDROP} --epochs ${EPOCHS} --output_dir ${OUT} --position_embedding ${POSEMB} --lr_joiner ${LRJOINER} --save_checkpoint_every ${SAVEFREQ} --dim_feedforward $(( 4 * ${HDIM} )) --set_cost_segment 5 --set_cost_siou 3 --segment_loss_coef 5 --siou_loss_coef 3 --cuda
 
