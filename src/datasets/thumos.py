@@ -11,6 +11,16 @@ import numpy as np
 import json
 import datasets.thumos_utils as data_utils
 
+cached_data = {}
+def read_cache(key):
+    if key in cached_data.keys():
+        data = cached_data[key]
+    else:
+        data = np.load(key)
+        cached_data[key] = data
+    return data 
+    
+
 class ThumosDetection(Dataset):
     """
        thumos dataset
@@ -76,7 +86,7 @@ class ThumosVideoData(object):
         
         anno = target['annotations']
 
-        feature = np.load(anno['feature_path'])
+        feature = read_cache(anno['feature_path'])
               
         triplets = anno['actions']
         duration = anno['duration']
