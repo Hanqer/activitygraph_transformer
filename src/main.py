@@ -75,6 +75,7 @@ parser.add_argument('--lr_joiner', default=0, type=float)
 parser.add_argument('--weight_decay', default=1e-5, type=float)
 parser.add_argument('--lr_drop', default=100, type=int)
 parser.add_argument('--clip_max_norm', default=1, type=float,help='gradient clipping max norm')
+parser.add_argument('--eval_interval', default=1, type=int)
 
 # * Distributed Training
 parser.add_argument('--world_size', default=1, type=int, help='number of distributed processes')
@@ -186,14 +187,15 @@ def main(args):
             for checkpoint_path in checkpoint_paths:
                 utils.save_on_master({'model': model_without_ddp.state_dict(), 'optimizer': optimizer.state_dict(), 'lr_scheduler': lr_scheduler.state_dict(), 'epoch': epoch, 'args': args,}, checkpoint_path) 
         
-        # evaluation
-        test_stats = evaluate(epoch, model, criterion, postprocessors, data_loader_test, args.output_dir, args.dataset, device)
+        if (epoch + 1) % args.eval_interval == 0:
+            # evaluation
+            test_stats = evaluate(epoch, model, criterion, postprocessors, data_loader_test, args.output_dir, args.dataset, device)
 
-        log_stats = {**{'train_'+str(k): v for k, v in train_stats.items()}, **{'test_'+str(k): v for k, v in test_stats.items()},'epoch': epoch, 'n_parameters': n_parameters}
-        
-        if args.output_dir and utils.is_main_process():
-            with (checkpoint_dir / 'log.json').open("a") as f:
-                f.write(json.dumps(log_stats) + "\n")
+            log_stats = {**{'train_'+str(k): v for k, v in train_stats.items()}, **{'test_'+str(k): v for k, v in test_stats.items()},'epoch': epoch, 'n_parameters': n_parameters}
+            
+            if args.output_dir and utils.is_main_process():
+                with (checkpoint_dir / 'log.json').open("a") as f:
+                    f.write(json.dumps(log_stats) + "\n")
 
         lr_scheduler.step()
 
